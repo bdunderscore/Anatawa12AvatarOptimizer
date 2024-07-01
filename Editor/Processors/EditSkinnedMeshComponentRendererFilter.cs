@@ -20,28 +20,13 @@ namespace Anatawa12.AvatarOptimizer.Processors
         public static EditSkinnedMeshComponentRendererFilter Instance { get; } =
             new EditSkinnedMeshComponentRendererFilter();
 
-        public ReactiveValue<ImmutableList<RenderGroup>> TargetGroups { get; }
-
-        public EditSkinnedMeshComponentRendererFilter()
-        {
-            TargetGroups = ReactiveValue<ImmutableList<RenderGroup>>.Create(
-                "anatawa12.avatar-optimizer.EditSkinnedMeshComponentRendererFilter.TargetGroups",
-                CollectTarget);
-        }
-
-        private async Task<ImmutableList<RenderGroup>> CollectTarget(ComputeContext ctx)
+        public ImmutableList<RenderGroup> GetTargetGroups(ComputeContext ctx)
         {
             // currently remove meshes are only supported
-            var rmInBoxTask = ctx.Observe(CommonQueries.GetComponentsByType<RemoveMeshInBox>());
-            var rmByBlendShapeTask = ctx.Observe(CommonQueries.GetComponentsByType<RemoveMeshByBlendShape>());
-            var rmByMaskTask = ctx.Observe(CommonQueries.GetComponentsByType<RemoveMeshByMask>());
-
-            await Task.WhenAll(rmInBoxTask, rmByBlendShapeTask, rmByMaskTask);
-
-            var rmInBox = rmInBoxTask.Result;
-            var rmByBlendShape = rmByBlendShapeTask.Result;
-            var rmByMask = rmByMaskTask.Result;
-
+            var rmInBox = ctx.GetComponentsByType<RemoveMeshInBox>();
+            var rmByBlendShape = ctx.GetComponentsByType<RemoveMeshByBlendShape>();
+            var rmByMask = ctx.GetComponentsByType<RemoveMeshByMask>();
+            
             var targets = new HashSet<Renderer>();
 
             foreach (var component in rmInBox.Concat<EditSkinnedMeshComponent>(rmByBlendShape).Concat(rmByMask))
